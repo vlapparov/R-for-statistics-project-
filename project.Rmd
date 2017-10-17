@@ -117,10 +117,11 @@ diff_day_we <- average_cons_we %>% inner_join(average_cons, by = "age") %>%
 
 
   diff_day_we[diff_day_we$d != 0,] %>% ggplot(aes(x=age, y=d))+
-  geom_col()+
+  geom_col(fill = "black")+
   xlab("Age")+
-  ylab("Average Daily Alcohol consumption")+
-  ggtitle("Comparing Age and the Average Daily Alcohol consumption per Week-End")
+  ylab("Average Alcohol consumption")+
+  ggtitle("The difference between the Average Daily and Week-End Alcohol consumption")+
+    scale_x_continuous(breaks = round(seq(15, 20, by = 1),1))
 ```
 
-In fact we see, that 17-years old students increase their average consumption of alcohol so that they pass tj the next category from 2.5 to 3.5, where 1 - very low consumption and 5 - very high.
+In fact we see, that 17-years old students increase their average consumption of alcohol so that they pass to the next category (from 2.5 to 3.5, where 1 - very low consumption and 5 - very high).
