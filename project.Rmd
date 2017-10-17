@@ -63,7 +63,7 @@ There are several (382) students that belong to both datasets . These students c
 
 https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION
 
-#Let's start:
+#Preliminary studies:
 
 First, let's import our data, and have a first look on it's features:
 
@@ -81,9 +81,11 @@ dim(data)
 names(data)
 ```
 
-Now let us study the age of persons that we have:
+#Alcohol consumption by age
 
+It is interesting to find out which age group consumes the most alcohol and what is the tendence.
 
+Let us have a look first on the Average Daily and Week-End Alcohol consumption:
 ```{r}
 average_cons <- data %>% 
   select("age", "Dalc") %>% 
@@ -125,3 +127,67 @@ diff_day_we <- average_cons_we %>% inner_join(average_cons, by = "age") %>%
 ```
 
 In fact we see, that 17-years old students increase their average consumption of alcohol so that they pass to the next category (from 2.5 to 3.5, where 1 - very low consumption and 5 - very high).
+
+This tendence reflects the fact of increased interest to alcohol due to age (I mean that 22-old student is usually more experienced than 17-year old one).
+
+#Academic Results and Alcohol consumption
+
+It is very interesting to look if alcohol consumption affects on the academic results.
+Let us take the marks for the first and the second period and have a look:
+
+```{r}
+res1 <- data %>% 
+  select("Dalc", "Walc", "absences", "G1", "G2", "G3") %>% 
+  mutate(av_alc = (Dalc + Walc)/2) %>% 
+  select("av_alc", "absences", "G1", "G2", "G3") 
+
+res1 %>% 
+  ggplot(aes(x = G1, y = G2, color = av_alc)) +
+  geom_point() +
+  xlab("Marks in the 1st period")+
+  ylab("Marks in the 2nd period")+
+  ggtitle("Dependence of Academic Results on Average Alcohol consumption")+
+  geom_smooth(method = "lm", se = FALSE) + 
+  scale_colour_gradientn(colours=rainbow(4))
+```
+
+Let us take a look on the student's marks with the average alcohol consumption rate more than 2.5:
+```{r}
+res1[res1$av_alc > 2.5,] %>% 
+  ggplot(aes(x = G1, y = G2, color = av_alc)) +
+  geom_point() +
+  xlab("Marks in the 1st period")+
+  ylab("Marks in the 2nd period")+
+  ggtitle("Dependence of Academic Results on Average Alcohol consumption")+
+  geom_smooth(method = "lm", se = FALSE) + 
+  scale_colour_gradientn(colours=rainbow(4))
+```
+
+From this plot we can't conclude that the alcohol consumption really affects the academic results. But what happenes if we will compare the marks for the 1st and the 3rd period?
+
+```{r}
+res1[res1$av_alc > 2.5,] %>% 
+  ggplot(aes(x = G1, y = G3, color = av_alc)) +
+  geom_point() +
+  xlab("Marks in the 1st period")+
+  ylab("Marks in the 3nd period")+
+  ggtitle("Dependence of Academic Results on Average Alcohol consumption")+
+  geom_smooth(method = "lm", se = FALSE) + 
+  scale_colour_gradientn(colours=rainbow(4))
+```
+
+
+```{r}
+
+res1 %>% 
+  ggplot(aes(x = G1, y = G2, size = absences, color = av_alc)) +
+  geom_point() +
+  xlab("Marks in the 1st period")+
+  ylab("Marks in the 2nd period")+
+  ggtitle("Dependence of Academic Results on Absences and Average Alcohol consumption")+
+  geom_smooth(method = "lm", se = FALSE) + 
+  scale_colour_gradientn(colours=rainbow(4))
+
+```
+
+
