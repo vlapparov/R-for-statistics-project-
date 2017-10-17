@@ -52,7 +52,7 @@ These grades are related with the course subject, Math or Portuguese:
 - G2 - second period grade (numeric: from 0 to 20)
 - G3 - final grade (numeric: from 0 to 20, output target)
 
-#Additional note: 
+###Additional note: 
 There are several (382) students that belong to both datasets . These students can be identified by searching for identical attributes that characterize each student, as shown in the annexed R file.
 
 ###Source Information
@@ -63,45 +63,64 @@ There are several (382) students that belong to both datasets . These students c
 
 https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION
 
-####Let's start:
+#Let's start:
 
-First, we import our data, and have a first look on it's features:
+First, let's import our data, and have a first look on it's features:
 
-```{r}
+```{r adding libraries}
 library("readxl")
 library("dplyr")
 library("ggplot2")
-data <- read.csv("D:/Homework/project/R-for-statistics-project-/student-mat.csv")
-head(data)
-summary(data)
+library("DT")
+```
+```{r five functions to use with dataframe (we will use four in fact)}
+data <- read.csv("student-mat.csv")
+datatable(data)
+# summary(data)
 dim(data)
 names(data)
 ```
 
-Now let us study the age of persons that we have
-```{r}
-average_cons <- data %>% select("age", "Dalc") %>% group_by(age) %>%  summarise(average_daily_cons = mean(Dalc))
+Now let us study the age of persons that we have:
 
-average_cons %>% ggplot(aes(x=age, y=average_daily_cons))+
-  geom_line()+
-  theme(legend.position="none")+
+
+```{r}
+average_cons <- data %>% 
+  select("age", "Dalc") %>% 
+  group_by(age) %>%  
+  summarise(average_daily_cons = mean(Dalc))
+
+average_cons_we <- data %>% 
+  select("age", "Walc") %>% 
+  group_by(age) %>%  
+  summarise(average_daily_cons = mean(Walc))
+
+  ggplot()+
+  geom_line(aes(age, average_daily_cons, color = "Working days"), average_cons)+
+  geom_line(aes(age, average_daily_cons, color = "Week-End"), average_cons_we)+
+  geom_point(aes(age, average_daily_cons), average_cons, col = "blue")+
+  geom_point(aes(age, average_daily_cons), average_cons_we, col = "blue")+
   xlab("Age")+
-  ylab("Average Daily Alcohol consumption")+
-  ggtitle("Comparing Age and the Average Daily Alcohol consumption while working week")
+  ylab("Average Alcohol consumption")+
+  ggtitle("Average Daily and Week-End Alcohol consumption")+
+    scale_x_continuous(breaks = round(seq(15, 22, by = 1),1))
 ```
 
-From this plot we can see that the older the individual, the more he consumes alcohol while working week.It seems logic to me.
+From this plot we can see that basicly the older the individual, the more he consumes alcohol while working week. On the other hand we can see increased consumtion among the young people (17 years-old students). It is interestiong to see the comparaison between daily and weekend average consumption:
 
-Let's now have a look what happens while week-end:
+```{r difference between daily and weekend average consumption}
 
-```{r}
-average_cons_we <- data %>% select("age", "Walc") %>% group_by(age) %>%  summarise(average_daily_cons = mean(Walc))
+diff_day_we <- average_cons_we %>% inner_join(average_cons, by = "age") %>% 
+  mutate(d = average_daily_cons.x - average_daily_cons.y) %>% 
+  select("age", "d") 
 
-average_cons_we %>% ggplot(aes(x=age, y=average_daily_cons))+
-  geom_line()+
-  theme(legend.position="none")+
+
+
+  diff_day_we[diff_day_we$d != 0,] %>% ggplot(aes(x=age, y=d))+
+  geom_col()+
   xlab("Age")+
   ylab("Average Daily Alcohol consumption")+
   ggtitle("Comparing Age and the Average Daily Alcohol consumption per Week-End")
 ```
 
+In fact we see, that 17-years old students increase their average consumption of alcohol so that they pass tj the next category from 2.5 to 3.5, where 1 - very low consumption and 5 - very high.
