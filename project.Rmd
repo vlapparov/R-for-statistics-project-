@@ -193,17 +193,15 @@ res1 %>%
 
 ```
 
+Let's have a look on the correlation matrix to find out the possible relations between our variables. 
 ```{r}
 cormat <- round(cor(res1),2)
-head(cormat)
+#head(cormat)
 
 library(reshape2)
 melted_cormat <- melt(cormat)
-head(melted_cormat)
+#head(melted_cormat)
 
-ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) + 
-  geom_tile() +
-  scale_colour_gradientn(colours=rainbow(4))
 
 # Get lower triangle of the correlation matrix
   get_lower_tri<-function(cormat){
@@ -217,21 +215,21 @@ ggplot(data = melted_cormat, aes(x=Var1, y=Var2, fill=value)) +
   }
   
   upper_tri <- get_upper_tri(cormat)
-upper_tri
+# upper_tri
 
 # Melt the correlation matrix
-library(reshape2)
 melted_cormat <- melt(upper_tri, na.rm = TRUE)
 # Heatmap
-library(ggplot2)
+
 ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
  geom_tile(color = "white")+
- scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-   midpoint = 0, limit = c(-1,1), space = "Lab", 
+ scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+   midpoint = 0, limit = c(-1,1), space = "Lab",
    name="Pearson\nCorrelation") +
-  theme_minimal()+ 
- theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+  theme_minimal()+
+ theme(axis.text.x = element_text(angle = 45, vjust = 1,
     size = 12, hjust = 1))+
  coord_fixed()
 ```
 
+As we can see, there is no fort corelation between alcohol consumption and the academic results. 
