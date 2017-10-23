@@ -232,4 +232,119 @@ ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
  coord_fixed()
 ```
 
-As we can see, there is no fort corelation between alcohol consumption and the academic results. 
+As we can see, there is no fort correlation between alcohol consumption and the academic results. 
+
+
+#Towards a real mathematical model
+
+First, let's convert our data to something, that we can use for model constructing.
+We will replace all characters by natural numbers in order to construct our model.
+
+```{r}
+df <- data
+df$school <- factor(df$school, labels = c(1,2))
+df$sex <- factor(df$sex, labels = c(1,2))
+df$address <- factor(df$address, labels = c(1,2))
+df$famsize <- factor(df$famsize, labels = c(1,2))
+df$Pstatus <- factor(df$Pstatus, labels = c(1:2))
+df$Mjob <- factor(df$Mjob, labels = c(1:5))
+df$Fjob <- factor(df$Fjob, labels = c(1:5))
+df$reason <- factor(df$reason, labels = c(1:4))
+df$guardian <- factor(df$guardian, labels = c(1:3))
+for (i in c(16:23)) {
+  df[,i] <- factor(df[,i], labels = c(1,2))
+}
+
+```
+
+And also we will explain an average of grades obtained:
+
+```{r}
+df <- df %>% mutate(y = (G1+G2+G3)/3) %>% select(-G1, -G2, -G3)
+datatable(df)
+sapply(df, typeof)
+```
+
+By the following steps we are looking for the number of variables needed to "explain"" the grades.
+```{r}
+train <- data.frame(model.matrix( ~ .- 1, data=df)) 
+cor_temp <- cor(train, train, method = "pearson")
+cor_final <- data.frame(cor = cor_temp[1:40,41], varn = names(cor_temp[1:40,41])) 
+cor_final <- cor_final %>% 
+  mutate(cor_abs = abs(cor)) %>% 
+  arrange(desc(cor_abs))
+plot(cor_final$cor_abs, type="b", col = "blue",xlab = "Number", ylab = "Correlation", main = "Number of variables")
+```
+
+So we will choose only variables with the level of correlation more than 0.15 for our purposes.
+
+```{r}
+train_final <- cor_final %>%
+  filter(cor_abs > 0.1)
+
+train_final <- train %>% 
+  select("y", train_final$varn)
+
+head(train_final)
+```
+
+Let us now build a new correlation matrix taking into account our train data and have a look at our model summary.
+```{r}
+library("corrgram")
+corrgram(train_final,lower.panel=panel.cor,upper.panel=panel.pie, cor.method = "pearson")
+summary(lm(data = train_final, y ~ .))
+```
+
+We see that R-square is not very high (0.13), but this is not as bad as estimated: we build a model, based on the data, where we manually changed data.
+
+#PCA
+
+Now we will use a principal component analysis (PCA). It is a statistical procedure that uses an orthogonal transformation to convert a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components (or sometimes, principal modes of variation). 
+
+As we know, the number of principal components is less than or equal to the smaller of the number of original variables or the number of observations. This transformation is defined in such a way that the first principal component has the largest possible variance (that is, accounts for as much of the variability in the data as possible), and each succeeding component in turn has the highest variance possible under the constraint that it is orthogonal to the preceding components. The resulting vectors are an uncorrelated orthogonal basis set. 
+
+```{r}
+data_pca <- train_final %>% select(-y)
+pca <- prcomp(data_pca, scale. = TRUE, center = TRUE)
+plot(pca, type="l")
+```
+
+```{r}
+pca_df <- data.frame(pca$x)
+pca_df <- pca_df %>% select(-PC7,-PC8) 
+pca_df$y = train_final$y
+
+corrgram(pca_df,lower.panel=panel.cor,upper.panel=panel.pie)
+```
+
+```{r}
+model <- lm(data = pca_df, y ~ .)
+summary(model)
+```
+
+Take a look at the following biplot of PC1 and PC2 (explaining 50% of the data):
+
+(credits for the biplot function crayola http://stackoverflow.com/questions/6578355/plotting-pca-biplot-with-ggplot2)
+
+```{r}
+PCbiplot <- function(PC, x="PC1", y="PC2") {
+    data <- data.frame( PC$x)
+    plot <- ggplot(data, aes_string(x=x, y=y))
+    datapc <- data.frame(varnames=row.names(PC$rotation), PC$rotation)
+    mult <- min(
+        (max(data[,y]) - min(data[,y])/(max(datapc[,y])-min(datapc[,y]))),
+        (max(data[,x]) - min(data[,x])/(max(datapc[,x])-min(datapc[,x])))
+        )
+    datapc <- transform(datapc,
+            v1 = .7 * mult * (get(x)),
+            v2 = .7 * mult * (get(y))
+            )
+    plot <- plot + coord_equal() + geom_text(data=datapc, aes(x=v1, y=v2, label=varnames), size = 3, vjust=1, color="darkred")
+    plot <- plot + geom_segment(data=datapc, aes(x=0, y=0, xend=v1, yend=v2), arrow=arrow(length=unit(0.2,"cm")), alpha=0.5, color="black")
+    plot
+}
+
+PCbiplot(pca)
+```
+
+#Conclusion
