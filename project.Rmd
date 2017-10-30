@@ -9,11 +9,11 @@ This is a project for "R for statistics" course.
 
 ###Context:
 
-The data were obtained in a survey of students math and portuguese language courses in secondary school. It contains a lot of interesting social, gender and study information about students. You can use it for some EDA or try to predict students final grade.
+The data were obtained in a survey of students math and Portuguese language courses in secondary school. It contains a lot of interesting social, gender and study information about students. You can use it for some EDA or try to predict students final grade.
 
 ###Content:
 
-Attributes for both student-mat.csv (Math course) and student-por.csv (Portuguese language course) datasets:
+Attributes for both student-mat.csv (Math course) and student-por.csv (Portuguese language course) data sets:
 
 - school - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
 - sex - student's sex (binary: 'F' - female or 'M' - male)
@@ -83,7 +83,7 @@ names(data)
 
 #Alcohol consumption by age
 
-It is interesting to find out which age group consumes the most alcohol and what is the tendence.
+It is interesting to find out which age group consumes the most alcohol and what is the tendency.
 
 Let us have a look first on the Average Daily and Week-End Alcohol consumption:
 ```{r}
@@ -108,7 +108,7 @@ average_cons_we <- data %>%
     scale_x_continuous(breaks = round(seq(15, 22, by = 1),1))
 ```
 
-From this plot we can see that basicly the older the individual, the more he consumes alcohol while working week. On the other hand we can see increased consumtion among the young people (17 years-old students). It is interestiong to see the comparaison between daily and weekend average consumption:
+From this plot we can see that basically the older the individual, the more he consumes alcohol while working week. On the other hand we can see increased consumption among the young people (17 years-old students). It is interesting to see the comparison between daily and weekend average consumption:
 
 ```{r difference between daily and weekend average consumption}
 
@@ -128,7 +128,7 @@ diff_day_we <- average_cons_we %>% inner_join(average_cons, by = "age") %>%
 
 In fact we see, that 17-years old students increase their average consumption of alcohol so that they pass to the next category (from 2.5 to 3.5, where 1 - very low consumption and 5 - very high).
 
-This tendence reflects the fact of increased interest to alcohol due to age (I mean that 22-old student is usually more experienced than 17-year old one).
+This tendency reflects the fact of increased interest to alcohol due to age (I mean that 22-old student is usually more experienced than 17-year old one).
 
 #Academic Results and Alcohol consumption
 
@@ -163,7 +163,7 @@ res1[res1$av_alc > 2.5,] %>%
   scale_colour_gradientn(colours=rainbow(4))
 ```
 
-From this plot we can't conclude that the alcohol consumption really affects the academic results. But what happenes if we will compare the marks for the 1st and the 3rd period?
+From this plot we can't conclude that the alcohol consumption really affects the academic results. But what happens if we will compare the marks for the 1st and the 3rd period?
 
 ```{r}
 res1[res1$av_alc > 2.5,] %>% 
@@ -178,7 +178,7 @@ res1[res1$av_alc > 2.5,] %>%
 
 Once again this is not evident that the alcohol consumption really affects the academic results.
 
-If we associate the size of each point with the absences, we will see, that people, who don't go to school get bad notes. 
+If we associate the size of each point with the absences, we will see, that people, who don't attend school classes get bad notes. 
 
 ```{r}
 
@@ -232,12 +232,12 @@ ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
  coord_fixed()
 ```
 
-As we can see, there is no fort correlation between alcohol consumption and the academic results. 
+As we can see, there is no fort correlation between alcohol consumption and the academic results. So it is necessary to build some statistical model to explore our data and potential tendencies more precisely. 
 
 
 #Towards a real mathematical model
 
-First, let's convert our data to something, that we can use for model constructing.
+First, let's convert our data to something, that we can use for model construction.
 We will replace all characters by natural numbers in order to construct our model.
 
 ```{r}
@@ -276,11 +276,11 @@ cor_final <- cor_final %>%
 plot(cor_final$cor_abs, type="b", col = "blue",xlab = "Number", ylab = "Correlation", main = "Number of variables")
 ```
 
-So we will choose only variables with the level of correlation more than 0.15 for our purposes.
+So we will choose only variables with the level of correlation more than 0.1 for our purposes.
 
 ```{r}
 train_final <- cor_final %>%
-  filter(cor_abs > 0.1)
+  filter(cor_abs > 0.05)
 
 train_final <- train %>% 
   select("y", train_final$varn)
@@ -295,7 +295,15 @@ corrgram(train_final,lower.panel=panel.cor,upper.panel=panel.pie, cor.method = "
 summary(lm(data = train_final, y ~ .))
 ```
 
-We see that R-square is not very high (0.13), but this is not as bad as estimated: we build a model, based on the data, where we manually changed data.
+```{r}
+library(caret)
+imp <- varImp(lm(data = train_final, y ~ .), scale = TRUE)
+# varImp(lm(data = train_final, y ~ .), scale = TRUE)
+# imp[order(imp$Overall,decreasing=TRUE),]
+summary(lm(data = train_final, y ~ .))
+```
+
+We see that R-square is not very high (0.28), but this is not as bad as estimated: we build a model, based on the data, where we manually changed data.
 
 #PCA
 
@@ -311,7 +319,6 @@ plot(pca, type="l")
 
 ```{r}
 pca_df <- data.frame(pca$x)
-pca_df <- pca_df %>% select(-PC7,-PC8) 
 pca_df$y = train_final$y
 
 corrgram(pca_df,lower.panel=panel.cor,upper.panel=panel.pie)
@@ -322,12 +329,12 @@ model <- lm(data = pca_df, y ~ .)
 summary(model)
 ```
 
-Take a look at the following biplot of PC1 and PC2 (explaining 50% of the data):
+We will plot PC1 and PC7 explaining our data more than the other PCA vectors:
 
 (credits for the biplot function crayola http://stackoverflow.com/questions/6578355/plotting-pca-biplot-with-ggplot2)
 
 ```{r}
-PCbiplot <- function(PC, x="PC1", y="PC2") {
+PCbiplot <- function(PC, x="PC1", y="PC7") {
     data <- data.frame( PC$x)
     plot <- ggplot(data, aes_string(x=x, y=y))
     datapc <- data.frame(varnames=row.names(PC$rotation), PC$rotation)
@@ -348,3 +355,5 @@ PCbiplot(pca)
 ```
 
 #Conclusion
+
+So finally we can conclude that the alcohol consumption badly affects on the school grades (as it was expected) and we even see a positive correlation between the number of "go-outs", alcohol and absences and a negative one with a studytime.  
