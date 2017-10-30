@@ -2,26 +2,27 @@
 
 ui <- fluidPage(
   sliderInput(inputId = "bins", "Average alcohol consumption rate", min = 1, 
-              max =5, value = 3, step = 0.1),
+              max =5, value = c(2,3), step = 0.1),
   plotOutput("the_plot"), 
   checkboxInput(inputId = "check1", label = "Absences", value = FALSE),
   numericInput(inputId = "per_1", label = "Choose a period", 
                value = 1, min = 1, max = 3, step = 1),
   numericInput(inputId = "per_2", label = "Choose a period", 
-               value = 2, min = 1, max = 3, step = 1)
+               value = 2, min = 1, max = 3, step = 1),
+  textOutput("interv")
 )
 server <- function(input, output) {
   data <- read.csv("student-mat.csv")
+  
   res1 <- data %>% 
     select("Dalc", "Walc", "absences", "G1", "G2", "G3") %>% 
     mutate(av_alc = (Dalc + Walc)/2) %>% 
     select("av_alc", "absences", "G1", "G2", "G3") 
-  
- 
+    
   
     output$the_plot <- renderPlot({
       if(input$check1){
-    res1[res1$av_alc <= input$bins,] %>% 
+    res1[res1$av_alc %in% seq(input$bins[1], input$bins[2], 0.1),] %>% 
       ggplot(aes(x = G1, y = G2, size = absences, color = av_alc)) +
       geom_point() +
       xlab("Marks in the 1st period")+
@@ -31,7 +32,7 @@ server <- function(input, output) {
       scale_colour_gradientn(colours=rainbow(4))
       }
     else{
-      res1[res1$av_alc <= input$bins,] %>% 
+      res1[res1$av_alc %in% seq(input$bins[1], input$bins[2], 0.1),] %>% 
         ggplot(aes(x = G1, y = G2, color = av_alc)) +
         geom_point() +
         xlab("Marks in the 1st period")+
