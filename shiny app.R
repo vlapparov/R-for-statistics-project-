@@ -4,8 +4,11 @@ ui <- fluidPage(
   sliderInput(inputId = "bins", "Average alcohol consumption rate", min = 1, 
               max =5, value = 3, step = 0.1),
   plotOutput("the_plot"), 
-  checkboxInput(inputId = "check1", label = "Absences", value = FALSE)
-  
+  checkboxInput(inputId = "check1", label = "Absences", value = FALSE),
+  numericInput(inputId = "per_1", label = "Choose a period", 
+               value = 1, min = 1, max = 3, step = 1),
+  numericInput(inputId = "per_2", label = "Choose a period", 
+               value = 2, min = 1, max = 3, step = 1)
 )
 server <- function(input, output) {
   data <- read.csv("student-mat.csv")
